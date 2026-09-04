@@ -16,9 +16,16 @@ variable "allowed_origin" {
   default     = "https://savibar-gha.github.io"
 }
 
-variable "report_secret" {
-  description = "Clave que debe ingresar el staff para ver el reporte (back office). Definila con TF_VAR_report_secret o en un terraform.tfvars que NO se sube al repo."
-  type        = string
-  sensitive   = true
+variable "report_callback_url" {
+  description = <<-EOT
+    URL completa de report.html a la que Cognito redirige después del login
+    (ej: https://xxxxxxxx.cloudfront.net/report.html).
+    En el primer 'apply' todavía no existe (CloudFront no está creado) —
+    dejá el default y corré 'terraform apply' de nuevo con el valor real
+    una vez que tengas el dominio de CloudFront (ver README, paso 2 pasadas).
+  EOT
+  type    = string
+  default = "https://localhost/report.html"
 }
+
 
