@@ -312,6 +312,9 @@
   <div class="thanks" id="thanksMsg">
     <h2>¡Gracias por tu tiempo! 🧡</h2>
     <p>Tu opinión nos ayuda a mejorar cada clase.</p>
+    <p style="font-size:13px;color:#a3907c;">Se abrió WhatsApp con este mensaje para enviar al +598 98 443 790:</p>
+    <pre id="jsonOutput" style="text-align:left; background:var(--peach-light); border-radius:12px; padding:18px; font-size:12.5px; overflow-x:auto; max-width:100%; white-space:pre-wrap; word-break:break-word;"></pre>
+    <button type="button" id="resendBtn" class="submit-btn" style="margin-top:8px;">Abrir WhatsApp de nuevo</button>
   </div>
 
 </div>
@@ -331,10 +334,73 @@
     });
   });
 
+  const WHATSAPP_TO = '+59898443790';
+
+  function buildResultsJSON(){
+    const respuestas = [];
+    document.querySelectorAll('.question-block').forEach(block=>{
+      const titleEl = block.querySelector('.q-title');
+      if(!titleEl) return;
+      const pregunta = titleEl.textContent.trim();
+
+      const seleccionadas = [];
+      block.querySelectorAll('label.opt').forEach(label=>{
+        const input = label.querySelector('input[type="checkbox"], input[type="radio"]');
+        if(input && input.checked){
+          let texto = label.textContent.replace(/\s+/g,' ').trim();
+          const otroInput = label.querySelector('.otro-input');
+          if(otroInput && otroInput.value.trim()){
+            texto = texto + ' ' + otroInput.value.trim();
+          }
+          seleccionadas.push(texto);
+        }
+      });
+
+      if(seleccionadas.length > 0){
+        respuestas.push({
+          pregunta: pregunta,
+          respuesta: seleccionadas.length === 1 ? seleccionadas[0] : seleccionadas
+        });
+      }
+    });
+
+    return {
+      encuesta: '+Pilates',
+      destinatario_whatsapp: WHATSAPP_TO,
+      fecha: new Date().toISOString(),
+      respuestas: respuestas
+    };
+  }
+
+  function buildWhatsAppMessage(resultJSON){
+    let texto = '*Nueva respuesta - Encuesta +Pilates*\n\n';
+    resultJSON.respuestas.forEach(r=>{
+      const respuesta = Array.isArray(r.respuesta) ? r.respuesta.join(', ') : r.respuesta;
+      texto += `*${r.pregunta}*\n${respuesta}\n\n`;
+    });
+    return texto.trim();
+  }
+
   document.getElementById('surveyForm').addEventListener('submit', function(e){
     e.preventDefault();
+
+    const resultJSON = buildResultsJSON();
+    const mensaje = buildWhatsAppMessage(resultJSON);
+
+    document.getElementById('jsonOutput').textContent = mensaje;
+
     this.style.display='none';
     document.getElementById('thanksMsg').style.display='block';
+
+    const numero = WHATSAPP_TO.replace(/[^0-9]/g,''); // wa.me requiere solo dígitos, sin '+'
+    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+
+    // Abre WhatsApp (app móvil o web) con el mensaje ya redactado.
+    window.open(url, '_blank');
+
+    document.getElementById('resendBtn').onclick = function(){
+      window.open(url, '_blank');
+    };
   });
 </script>
 
