@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "http_api" {
   cors_configuration {
     allow_origins = [var.allowed_origin]
     allow_methods = ["POST", "GET", "OPTIONS"]
-    allow_headers = ["content-type", "x-api-key"]
+    allow_headers = ["content-type", "authorization"]
   }
 }
 
@@ -37,23 +37,17 @@ resource "aws_lambda_permission" "allow_apigw_ingest" {
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
-# --- GET /reportes -> report (protegido con authorizer) ---
-resource "aws_apigatewayv2_authorizer" "report_auth" {
-  api_id                            = aws_apigatewayv2_api.http_api.id
-  authorizer_type                   = "REQUEST"
-  authorizer_uri                    = aws_lambda_function.authorizer.invoke_arn
-  identity_sources                  = ["$request.header.x-api-key"]
-  name                              = "${var.project_name}-report-authorizer"
-  authorizer_payload_format_version = "2.0"
-  enable_simple_responses           = true
-}
+# --- GET /reportes -> report (protegido con Cognito) ---
+resource "aws_apigatewayv2_authorizer" "cognito_auth" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.project_name}-cognito-authorizer"
 
-resource "aws_lambda_permission" "allow_apigw_authorizer" {
-  statement_id  = "AllowAPIGatewayInvokeAuthorizer"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.authorizer.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.report_client.id]
+    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.report_users.id}"
+  }
 }
 
 resource "aws_apigatewayv2_integration" "report" {
@@ -67,8 +61,8 @@ resource "aws_apigatewayv2_route" "get_reportes" {
   api_id             = aws_apigatewayv2_api.http_api.id
   route_key          = "GET /reportes"
   target             = "integrations/${aws_apigatewayv2_integration.report.id}"
-  authorization_type = "CUSTOM"
-  authorizer_id      = aws_apigatewayv2_authorizer.report_auth.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_auth.id
 }
 
 resource "aws_lambda_permission" "allow_apigw_report" {
