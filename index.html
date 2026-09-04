@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>+Pilates — Encuesta</title>
+<style>
+  :root{
+    --brown:#3a2318;
+    --orange:#e8842a;
+    --peach:#f7e6d8;
+    --peach-light:#fbf1e8;
+    --border:#e9d3bd;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:40px 16px;
+    background:#fdfaf6;
+    font-family:'Segoe UI', Arial, sans-serif;
+    color:var(--brown);
+    display:flex;
+    justify-content:center;
+  }
+  .card{
+    max-width:820px;
+    width:100%;
+    background:#fff;
+    border-radius:24px;
+    padding:40px clamp(20px,5vw,56px) 56px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 40px rgba(58,35,24,0.06);
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:-60px; left:-60px;
+    width:200px; height:200px;
+    border-radius:50%;
+    border:14px solid var(--peach);
+    opacity:0.7;
+  }
+  .header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    position:relative;
+    z-index:1;
+    margin-bottom:8px;
+  }
+  .logo{
+    font-family:Georgia, serif;
+    font-size:28px;
+    color:var(--brown);
+    font-weight:600;
+    letter-spacing:1px;
+  }
+  .logo span{color:var(--orange); font-weight:400;}
+  h1{
+    font-size:clamp(28px,5vw,40px);
+    line-height:1.1;
+    margin:18px 0 0;
+  }
+  h1 .sub{
+    display:block;
+    color:var(--orange);
+    font-weight:800;
+  }
+  .intro{
+    margin:18px 0 30px;
+    font-size:15px;
+    line-height:1.5;
+    color:#5a4638;
+  }
+  .question-block{
+    background:var(--peach-light);
+    border-radius:16px;
+    padding:22px 24px;
+    margin-bottom:18px;
+  }
+  .two-col, .three-col{
+    display:grid;
+    gap:24px;
+  }
+  .two-col{grid-template-columns:1fr 1fr;}
+  .three-col{grid-template-columns:1fr 1fr 1fr;}
+  @media(max-width:700px){
+    .two-col,.three-col{grid-template-columns:1fr;}
+  }
+  .q-title{
+    font-weight:700;
+    font-size:15.5px;
+    margin:0 0 4px;
+  }
+  .q-hint{
+    font-size:12.5px;
+    font-style:italic;
+    color:#8a7462;
+    margin:0 0 14px;
+  }
+  .options{
+    display:grid;
+    gap:12px;
+  }
+  .opt-grid-2{
+    grid-template-columns:1fr 1fr;
+  }
+  label.opt{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    cursor:pointer;
+    font-size:14.5px;
+    color:#3a2318;
+    user-select:none;
+  }
+  input[type="checkbox"], input[type="radio"]{
+    appearance:none;
+    -webkit-appearance:none;
+    min-width:20px;
+    height:20px;
+    border:2px solid var(--orange);
+    border-radius:6px;
+    margin-top:1px;
+    position:relative;
+    cursor:pointer;
+    background:#fff;
+    transition:background .15s ease, border-color .15s ease;
+    flex-shrink:0;
+  }
+  input[type="radio"]{border-radius:50%;}
+  input[type="checkbox"]:checked, input[type="radio"]:checked{
+    background:var(--orange);
+    border-color:var(--orange);
+  }
+  input[type="checkbox"]:checked::after{
+    content:"";
+    position:absolute;
+    left:6px; top:2px;
+    width:5px; height:10px;
+    border:solid white;
+    border-width:0 2px 2px 0;
+    transform:rotate(45deg);
+  }
+  input[type="radio"]:checked::after{
+    content:"";
+    position:absolute;
+    left:5px; top:5px;
+    width:8px; height:8px;
+    border-radius:50%;
+    background:white;
+  }
+  label.opt.checked-label{
+    color:var(--brown);
+    font-weight:600;
+  }
+  .otro-input{
+    border:none;
+    border-bottom:1.5px solid #c9b39e;
+    background:transparent;
+    font-size:14px;
+    padding:2px 4px;
+    flex:1;
+    min-width:80px;
+    color:var(--brown);
+    outline:none;
+  }
+  .otro-input:focus{border-color:var(--orange);}
+  .divider{
+    width:60px;
+    height:4px;
+    background:var(--orange);
+    border-radius:4px;
+    margin:36px 0 20px;
+  }
+  .submit-btn{
+    display:block;
+    margin:30px auto 0;
+    background:var(--orange);
+    color:#fff;
+    border:none;
+    padding:14px 40px;
+    border-radius:30px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .2s ease, transform .2s ease;
+  }
+  .submit-btn:hover{background:#d9711a; transform:translateY(-1px);}
+  .thanks{
+    display:none;
+    text-align:center;
+    padding:40px 20px;
+  }
+  .thanks h2{color:var(--orange); font-size:26px;}
+  .thanks p{color:#5a4638;}
+  .progress-note{
+    text-align:center;
+    font-size:12px;
+    color:#a3907c;
+    margin-top:14px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <form id="surveyForm">
+    <div class="header">
+      <div></div>
+      <div class="logo">+<span>P</span>ilates</div>
+    </div>
+
+    <h1>Queremos<span class="sub">conocerte un poco más</span></h1>
+    <p class="intro">Tu experiencia nos ayuda a seguir mejorando.<br>Por favor, completá esta breve encuesta.</p>
+
+    <div class="two-col">
+      <div class="question-block">
+        <p class="q-title">1. ¿Cómo llegaste a nosotros?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q1"> Recomendación de un conocido/a</label>
+          <label class="opt"><input type="radio" name="q1"> Vivo o trabajo cerca</label>
+          <label class="opt"><input type="radio" name="q1"> Google / Internet</label>
+          <label class="opt"><input type="radio" name="q1"> Redes sociales</label>
+          <label class="opt">
+            <input type="radio" name="q1">
+            Otro: <input type="text" class="otro-input" placeholder="">
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="q-title">2. ¿Por qué elegís Pilates como actividad física?</p>
+        <p class="q-hint">Podés marcar más de una opción.</p>
+        <div class="options">
+          <label class="opt"><input type="checkbox"> Aliviar dolores</label>
+          <label class="opt"><input type="checkbox"> Relajación</label>
+          <label class="opt"><input type="checkbox"> Mejorar la postura</label>
+          <label class="opt"><input type="checkbox"> Fortalecer el cuerpo</label>
+          <label class="opt">
+            <input type="checkbox">
+            Otro: <input type="text" class="otro-input" placeholder="">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <p class="q-title">3. ¿Tenés alguna patología, molestia o dolencia por la que elegiste Pilates?</p>
+      <p class="q-hint">Podés marcar más de una opción.</p>
+      <div class="options opt-grid-2">
+        <label class="opt"><input type="checkbox"> Contracturas musculares</label>
+        <label class="opt"><input type="checkbox"> Dolor de cadera</label>
+        <label class="opt"><input type="checkbox"> Dolor de espalda baja (lumbalgia)</label>
+        <label class="opt"><input type="checkbox"> Ciática</label>
+        <label class="opt"><input type="checkbox"> Dolor de cuello (cervicales)</label>
+        <label class="opt"><input type="checkbox"> Rigidez o falta de flexibilidad</label>
+        <label class="opt"><input type="checkbox"> Dolor de hombros</label>
+        <label class="opt"><input type="checkbox"> Recuperación de una lesión</label>
+        <label class="opt"><input type="checkbox"> Mala postura</label>
+        <label class="opt"><input type="checkbox"> Estrés o tensión muscular</label>
+        <label class="opt"><input type="checkbox"> Dolor de rodillas</label>
+        <label class="opt"><input type="checkbox"> No tengo dolores, vengo por bienestar</label>
+        <label class="opt" style="grid-column:1 / -1;">
+          <input type="checkbox">
+          Otro: <input type="text" class="otro-input" placeholder="">
+        </label>
+      </div>
+    </div>
+
+    <div class="three-col">
+      <div class="question-block">
+        <p class="q-title">4. ¿Notás cambios desde que empezaste Pilates?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q4"> Sí, muchos</label>
+          <label class="opt"><input type="radio" name="q4"> Sí, algunos</label>
+          <label class="opt"><input type="radio" name="q4"> Pocos</label>
+          <label class="opt"><input type="radio" name="q4"> No noto cambios</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="q-title">5. ¿Cómo te sentís después de una clase?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q5"> Con mucha energía</label>
+          <label class="opt"><input type="radio" name="q5"> Relajado/a</label>
+          <label class="opt"><input type="radio" name="q5"> Con menos molestias o tensión</label>
+          <label class="opt"><input type="radio" name="q5"> Igual que antes de la clase</label>
+          <label class="opt">
+            <input type="radio" name="q5">
+            Otro: <input type="text" class="otro-input" placeholder="">
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="q-title">6. ¿Sentís que el/la docente adapta los ejercicios cuando lo necesitás?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q6"> Sí</label>
+          <label class="opt"><input type="radio" name="q6"> A veces</label>
+          <label class="opt"><input type="radio" name="q6"> No</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <button type="submit" class="submit-btn">Enviar encuesta</button>
+    <p class="progress-note">Tus respuestas quedan guardadas solo en esta página.</p>
+  </form>
+
+  <div class="thanks" id="thanksMsg">
+    <h2>¡Gracias por tu tiempo! 🧡</h2>
+    <p>Tu opinión nos ayuda a mejorar cada clase.</p>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input=>{
+    input.addEventListener('change', ()=>{
+      const label = input.closest('label.opt');
+      if(input.type==='checkbox'){
+        label.classList.toggle('checked-label', input.checked);
+      } else {
+        // radio: update all in group
+        document.querySelectorAll(`input[name="${input.name}"]`).forEach(r=>{
+          r.closest('label.opt').classList.toggle('checked-label', r.checked);
+        });
+      }
+    });
+  });
+
+  document.getElementById('surveyForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    this.style.display='none';
+    document.getElementById('thanksMsg').style.display='block';
+  });
+</script>
+
+</body>
+</html>
