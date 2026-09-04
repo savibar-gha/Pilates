@@ -9,12 +9,14 @@ retomarlo desde cualquier lado (ej. la Mac mini) sin perder contexto.
 - Link corto: **https://tinyurl.com/MasPilates-Encuesta**
 - Logo real (`logo.png`) en el header, con fondo transparente.
 - Al enviar el formulario:
-  - Arma un JSON con `{pregunta, respuesta}` por cada pregunta respondida.
-  - Abre WhatsApp (`wa.me`) con ese resumen en texto, para enviar a
-    **+598 92 878 066**.
-  - **Pendiente:** agregar un `fetch()` al endpoint `POST /respuestas` del
-    backend (ver sección 2) para que además de WhatsApp, quede guardado en
-    DynamoDB. Ejemplo de snippet en `backend/README.md`, sección 8.
+  - Valida que las 6 preguntas estén respondidas antes de dejar enviar
+    (resalta en tono terracota la primera pregunta pendiente con un
+    mensaje amable, sin popup del navegador).
+  - Hace `fetch()` a `POST /respuestas` para guardar en DynamoDB.
+  - **Ya NO envía por WhatsApp** — se sacó el `wa.me` y todo lo relacionado
+    a pedido explícito (se decidió mantener el dato solo en AWS).
+  - Pantalla final: "¡Gracias por tu tiempo! 🧡" + confirmación, sin
+    mostrar texto técnico interno.
 - `preview.png`: imagen para el preview al compartir el link (Open Graph /
   Twitter Card), con el logo + "Queremos conocerte un poco más". Ya está
   referenciada en las meta tags de `index.html`.
@@ -32,52 +34,53 @@ Reporte (S3+CloudFront)  --GET  /reportes---->  API Gateway --> Lambda --> Dynam
 
 - **DynamoDB**: tabla `maspilates-encuesta-respuestas`, pay-per-request.
 - **Lambdas** (Python 3.12): `ingest` (guarda respuesta), `report` (agrega
-  conteos por pregunta/respuesta).
+  conteos + porcentaje por pregunta/respuesta).
 - **API Gateway HTTP API**: `POST /respuestas` pública, `GET /reportes`
-  protegida con JWT de Cognito.
-- **Cognito User Pool**: login del staff (sin auto-registro, se da de alta
-  usuario por usuario a mano).
+  protegida con JWT de Cognito. CORS habilitado tanto para el origen de
+  GitHub Pages (encuesta) como para el de CloudFront (dashboard).
+- **Cognito User Pool**: login del staff (sin auto-registro). Usuario
+  creado: `staff`.
 - **S3 + CloudFront**: hosting privado de `backend/report.html` (el bucket
   no es público, solo CloudFront puede leerlo vía Origin Access Control).
 
-### Estado del despliegue: **NO DESPLEGADO TODAVÍA**
+### Estado del despliegue: **DESPLEGADO Y FUNCIONANDO** (cuenta AWS dev 653714462550)
 
-Nada de esto corrió en AWS todavía — el Terraform está escrito y subido al
-repo, pero falta ejecutar `terraform apply` desde la Mac mini.
+Outputs de Terraform:
+```
+api_base_url             = https://jnljl8iff1.execute-api.us-east-1.amazonaws.com
+cognito_client_id        = 5iieidctajmsdud3kf4rrib06j
+cognito_hosted_ui_domain = maspilates-encuesta-report.auth.us-east-1.amazoncognito.com
+cognito_user_pool_id     = us-east-1_tlgFECQNF
+dynamodb_table_name      = maspilates-encuesta-respuestas
+report_site_url          = https://dxgmqiih8zjxq.cloudfront.net/report.html
+```
 
-### Próximos pasos pendientes (en orden)
+Dashboard de reportes: **https://dxgmqiih8zjxq.cloudfront.net/report.html**
+Login staff: usuario `staff`, contraseña `PilatesStaff2026!`.
 
-1. En la Mac mini: instalar Homebrew, `awscli`, `terraform` (sección 1 del
-   README de `backend/`).
-2. Crear Access Keys en IAM y correr `aws configure`.
-3. Clonar el repo, entrar a `backend/terraform`.
-4. **Primera pasada**: `terraform init && terraform apply`.
-5. Anotar los outputs: `api_base_url`, `report_site_url`,
-   `cognito_hosted_ui_domain`, `cognito_client_id`, `cognito_user_pool_id`.
-6. **Segunda pasada**: exportar `TF_VAR_report_callback_url` con el
-   `report_site_url` real y volver a aplicar (Cognito necesita esa URL
-   como callback del login).
-7. Crear usuarios de staff en Cognito con `aws cognito-idp admin-create-user`.
-8. Completar las 3 constantes (`API_BASE`, `COGNITO_DOMAIN`,
-   `COGNITO_CLIENT_ID`) en `backend/report.html` y volver a aplicar
-   Terraform para republicarlo en S3.
-9. Agregar el `fetch()` pendiente en `index.html` (frontend de la encuesta)
-   para que guarde en DynamoDB además de abrir WhatsApp.
-10. Probar todo el flujo end-to-end: completar la encuesta → verificar que
-    aparece en `GET /reportes` → verificar que el dashboard de
-    `report.html` lo muestra.
+En la Mac mini: AWS CLI + Terraform instalados vía Homebrew. Profile a usar
+siempre: `AWS_PROFILE=pilates-app-dev` (asume el rol
+`OrganizationAccountAccessRole` en la cuenta dev usando como source
+`pilates-management`, la cuenta de la Organization).
 
-## 3. Notas de seguridad / limpieza pendiente
+### Pendiente
 
-- Los tokens de GitHub (fine-grained PAT) usados durante esta sesión para
-  subir archivos ya cumplieron su función. **Revocarlos** desde
-  https://github.com/settings/tokens?type=beta si no se van a seguir
-  usando desde este chat.
+1. **Limpiar datos de prueba en DynamoDB**: hay ~6 filas de prueba (1 de
+   humo "Test smoke" + 5 respuestas random cargadas para probar el
+   dashboard) que hay que borrar antes de que entren respuestas reales.
+2. Confirmar que GitHub Pages ya sirve la versión sin WhatsApp (se pusheó
+   a `main`, puede tardar 1-2 min en propagar).
+3. Revocar el token de GitHub (fine-grained PAT) usado para subir este
+   archivo desde el celular, si ya no se va a usar:
+   https://github.com/settings/tokens?type=beta
+
+## 3. Notas de seguridad
+
 - Nunca commitear Access Keys de AWS ni tokens al repo.
 - El estado de Terraform (`terraform.tfstate`) queda local en la Mac mini
-  por defecto. Si en algún momento se quiere trabajar desde más de una
-  máquina, mover el backend de estado a S3 (bloque comentado en
-  `backend/terraform/providers.tf`).
+  por defecto (está en `.gitignore`, no se sube). Si en algún momento se
+  quiere trabajar desde más de una máquina, mover el backend de estado a
+  S3 (bloque comentado en `backend/terraform/providers.tf`).
 
 ## 4. Decisiones de diseño ya tomadas (para no repreguntar)
 
@@ -86,5 +89,12 @@ repo, pero falta ejecutar `terraform apply` desde la Mac mini.
 - Autenticación del back office: **Cognito** (login real por persona), no
   clave compartida.
 - Hosting del back office: **AWS (S3+CloudFront)**, separado de la
-  encuesta pública que sigue en GitHub Pages.
-- Número de WhatsApp de destino vigente: **+598 92 878 066**.
+  encuesta pública que sigue en GitHub Pages. Son páginas totalmente
+  independientes, sin link entre sí — la única conexión es vía backend.
+  `report.html` es de uso exclusivo del staff.
+- Se sacó el envío por WhatsApp: los resultados quedan solo en AWS.
+- Preguntas 1, 4, 5 y 6 son de una sola opción (radio); preguntas 2 y 3
+  permiten marcar varias a propósito (checkbox).
+- Cada opción del reporte muestra cantidad + porcentaje sobre el total de
+  esa pregunta (no sobre el total de encuestas, para que tenga sentido con
+  preguntas de selección múltiple).
