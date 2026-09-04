@@ -157,10 +157,8 @@
 
 <div id="gate">
   <h2>Reporte +Pilates</h2>
-  <p>Ingresá la clave de acceso para ver los resultados.</p>
-  <input type="password" id="keyInput" placeholder="Clave de acceso" autocomplete="off">
-  <br>
-  <button id="enterBtn">Ver reporte</button>
+  <p>Iniciá sesión con tu cuenta de staff para ver los resultados.</p>
+  <button id="loginBtn">Iniciar sesión</button>
   <p class="error" id="gateError"></p>
 </div>
 
@@ -179,39 +177,83 @@
 </div>
 
 <script>
-  const API_BASE = 'https://TU_API_URL'; // reemplazar con el output api_base_url de Terraform
-  const STORAGE_KEY = 'maspilates_report_key';
+  // --- Completar estos 3 valores con los outputs de Terraform ---
+  const API_BASE          = 'https://TU_API_URL';               // output: api_base_url
+  const COGNITO_DOMAIN     = 'TU_DOMINIO.auth.us-east-1.amazoncognito.com'; // output: cognito_hosted_ui_domain
+  const COGNITO_CLIENT_ID  = 'TU_CLIENT_ID';                     // output: cognito_client_id
+  // ----------------------------------------------------------------
+
+  const TOKEN_KEY = 'maspilates_id_token';
+  const REDIRECT_URI = window.location.origin + window.location.pathname;
 
   const gate = document.getElementById('gate');
   const dashboard = document.getElementById('dashboard');
-  const keyInput = document.getElementById('keyInput');
   const gateError = document.getElementById('gateError');
 
-  async function tryLoadReport(apiKey){
-    gateError.textContent = '';
+  function loginUrl(){
+    const params = new URLSearchParams({
+      client_id: COGNITO_CLIENT_ID,
+      response_type: 'token',
+      scope: 'openid email',
+      redirect_uri: REDIRECT_URI
+    });
+    return `https://${COGNITO_DOMAIN}/login?${params.toString()}`;
+  }
+
+  function captureTokenFromUrl(){
+    if(window.location.hash.includes('id_token')){
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      const idToken = params.get('id_token');
+      if(idToken){
+        localStorage.setItem(TOKEN_KEY, idToken);
+        history.replaceState(null, '', window.location.pathname); // limpiar el hash de la URL
+      }
+    }
+  }
+
+  async function loadReport(){
+    captureTokenFromUrl();
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    if(!token){
+      showGate();
+      return;
+    }
+
     try{
       const res = await fetch(`${API_BASE}/reportes`, {
-        headers: { 'x-api-key': apiKey }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if(res.status === 401 || res.status === 403){
-        gateError.textContent = 'Clave incorrecta.';
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+        gateError.textContent = 'Tu sesión expiró, iniciá sesión de nuevo.';
+        showGate();
         return;
       }
       if(!res.ok){
         gateError.textContent = 'No se pudo cargar el reporte. Probá de nuevo.';
+        showGate();
         return;
       }
 
       const data = await res.json();
-      localStorage.setItem(STORAGE_KEY, apiKey);
       renderDashboard(data);
-      gate.style.display = 'none';
-      dashboard.style.display = 'block';
+      showDashboard();
     }catch(err){
       gateError.textContent = 'Error de conexión con el servidor.';
+      showGate();
     }
+  }
+
+  function showGate(){
+    gate.style.display = 'block';
+    dashboard.style.display = 'none';
+  }
+
+  function showDashboard(){
+    gate.style.display = 'none';
+    dashboard.style.display = 'block';
   }
 
   function renderDashboard(data){
@@ -255,21 +297,11 @@
     return div.innerHTML;
   }
 
-  document.getElementById('enterBtn').addEventListener('click', () => {
-    const key = keyInput.value.trim();
-    if(key) tryLoadReport(key);
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    window.location.href = loginUrl();
   });
 
-  keyInput.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter') document.getElementById('enterBtn').click();
-  });
-
-  // Si ya había una clave guardada en este navegador, probarla directo
-  const savedKey = localStorage.getItem(STORAGE_KEY);
-  if(savedKey){
-    keyInput.value = savedKey;
-    tryLoadReport(savedKey);
-  }
+  loadReport();
 </script>
 
 </body>
