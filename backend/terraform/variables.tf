@@ -25,7 +25,7 @@ variable "report_callback_url" {
     una vez que tengas el dominio de CloudFront (ver README, paso 2 pasadas).
   EOT
   type    = string
-  default = "https://localhost/report.html"
+  default = "https://dxgmqiih8zjxq.cloudfront.net/report.html"
 }
 
 

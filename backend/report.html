@@ -138,6 +138,11 @@
     text-align:right;
     font-weight:700;
     color:var(--brown);
+    white-space:nowrap;
+  }
+  .bar-pct{
+    font-weight:400;
+    color:var(--muted);
   }
   .empty-state{
     text-align:center;
@@ -178,9 +183,9 @@
 
 <script>
   // --- Completar estos 3 valores con los outputs de Terraform ---
-  const API_BASE          = 'https://TU_API_URL';               // output: api_base_url
-  const COGNITO_DOMAIN     = 'TU_DOMINIO.auth.us-east-1.amazoncognito.com'; // output: cognito_hosted_ui_domain
-  const COGNITO_CLIENT_ID  = 'TU_CLIENT_ID';                     // output: cognito_client_id
+  const API_BASE          = 'https://jnljl8iff1.execute-api.us-east-1.amazonaws.com';
+  const COGNITO_DOMAIN     = 'maspilates-encuesta-report.auth.us-east-1.amazoncognito.com';
+  const COGNITO_CLIENT_ID  = '5iieidctajmsdud3kf4rrib06j';
   // ----------------------------------------------------------------
 
   const TOKEN_KEY = 'maspilates_id_token';
@@ -270,18 +275,22 @@
 
     data.reporte.forEach(pregunta => {
       const maxCantidad = Math.max(...pregunta.opciones.map(o => o.cantidad));
+      const totalPregunta = pregunta.opciones.reduce((sum, o) => sum + o.cantidad, 0);
       const card = document.createElement('div');
       card.className = 'question-card';
 
       const rows = pregunta.opciones.map(o => {
-        const pct = maxCantidad > 0 ? Math.round((o.cantidad / maxCantidad) * 100) : 0;
+        const barPct = maxCantidad > 0 ? Math.round((o.cantidad / maxCantidad) * 100) : 0;
+        const porcentaje = typeof o.porcentaje === 'number'
+          ? o.porcentaje
+          : (totalPregunta > 0 ? Math.round((o.cantidad / totalPregunta) * 1000) / 10 : 0);
         return `
           <div class="bar-row">
             <div class="bar-label">
               <span>${escapeHtml(o.respuesta)}</span>
-              <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+              <div class="bar-track"><div class="bar-fill" style="width:${barPct}%"></div></div>
             </div>
-            <div class="bar-count">${o.cantidad}</div>
+            <div class="bar-count">${o.cantidad} <span class="bar-pct">(${porcentaje}%)</span></div>
           </div>
         `;
       }).join('');

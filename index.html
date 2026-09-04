@@ -156,6 +156,19 @@
     color:var(--brown);
     font-weight:600;
   }
+  .question-block.has-error{
+    box-shadow:0 0 0 2px #d97a63;
+    background:#fdf1ec;
+  }
+  .q-error-msg{
+    display:none;
+    font-size:12.5px;
+    color:#c1502f;
+    margin:-8px 0 14px;
+  }
+  .question-block.has-error .q-error-msg{
+    display:block;
+  }
   .otro-input{
     border:none;
     border-bottom:1.5px solid #c9b39e;
@@ -312,14 +325,24 @@
   <div class="thanks" id="thanksMsg">
     <h2>¡Gracias por tu tiempo! 🧡</h2>
     <p>Tu opinión nos ayuda a mejorar cada clase.</p>
-    <p style="font-size:13px;color:#a3907c;">Se abrió WhatsApp con este mensaje para enviar al +598 92 878 066:</p>
-    <pre id="jsonOutput" style="text-align:left; background:var(--peach-light); border-radius:12px; padding:18px; font-size:12.5px; overflow-x:auto; max-width:100%; white-space:pre-wrap; word-break:break-word;"></pre>
-    <button type="button" id="resendBtn" class="submit-btn" style="margin-top:8px;">Abrir WhatsApp de nuevo</button>
+    <p style="font-size:13px;color:#a3907c;">Encuesta enviada correctamente.</p>
   </div>
 
 </div>
 
 <script>
+  document.querySelectorAll('.question-block').forEach(block=>{
+    const errorMsg = document.createElement('p');
+    errorMsg.className = 'q-error-msg';
+    errorMsg.textContent = 'Por favor, elegí una opción antes de continuar 🙏';
+    const hint = block.querySelector('.q-hint');
+    (hint || block.querySelector('.q-title')).after(errorMsg);
+  });
+
+  function blockHasAnswer(block){
+    return Array.from(block.querySelectorAll('input[type="checkbox"], input[type="radio"]')).some(i=>i.checked);
+  }
+
   document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input=>{
     input.addEventListener('change', ()=>{
       const label = input.closest('label.opt');
@@ -331,10 +354,27 @@
           r.closest('label.opt').classList.toggle('checked-label', r.checked);
         });
       }
+      const block = input.closest('.question-block');
+      if(blockHasAnswer(block)){
+        block.classList.remove('has-error');
+      }
     });
   });
 
-  const WHATSAPP_TO = '+59892878066';
+  function validateForm(){
+    let firstInvalid = null;
+    document.querySelectorAll('.question-block').forEach(block=>{
+      if(blockHasAnswer(block)){
+        block.classList.remove('has-error');
+      } else {
+        block.classList.add('has-error');
+        if(!firstInvalid) firstInvalid = block;
+      }
+    });
+    return firstInvalid;
+  }
+
+  const API_BASE = 'https://jnljl8iff1.execute-api.us-east-1.amazonaws.com';
 
   function buildResultsJSON(){
     const respuestas = [];
@@ -366,41 +406,30 @@
 
     return {
       encuesta: '+Pilates',
-      destinatario_whatsapp: WHATSAPP_TO,
       fecha: new Date().toISOString(),
       respuestas: respuestas
     };
   }
 
-  function buildWhatsAppMessage(resultJSON){
-    let texto = '*Nueva respuesta - Encuesta +Pilates*\n\n';
-    resultJSON.respuestas.forEach(r=>{
-      const respuesta = Array.isArray(r.respuesta) ? r.respuesta.join(', ') : r.respuesta;
-      texto += `*${r.pregunta}*\n${respuesta}\n\n`;
-    });
-    return texto.trim();
-  }
-
   document.getElementById('surveyForm').addEventListener('submit', function(e){
     e.preventDefault();
 
-    const resultJSON = buildResultsJSON();
-    const mensaje = buildWhatsAppMessage(resultJSON);
+    const firstInvalid = validateForm();
+    if(firstInvalid){
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
-    document.getElementById('jsonOutput').textContent = mensaje;
+    const resultJSON = buildResultsJSON();
+
+    fetch(`${API_BASE}/respuestas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(resultJSON)
+    }).catch(err => console.error('Error guardando respuesta en el backend:', err));
 
     this.style.display='none';
     document.getElementById('thanksMsg').style.display='block';
-
-    const numero = WHATSAPP_TO.replace(/[^0-9]/g,''); // wa.me requiere solo dígitos, sin '+'
-    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-
-    // Abre WhatsApp (app móvil o web) con el mensaje ya redactado.
-    window.open(url, '_blank');
-
-    document.getElementById('resendBtn').onclick = function(){
-      window.open(url, '_blank');
-    };
   });
 </script>
 

@@ -31,18 +31,26 @@ def lambda_handler(event, context):
                 if opcion:
                     conteo[pregunta][opcion] += 1
 
-    reporte = [
-        {
-            "pregunta": pregunta,
-            "opciones": [
-                {"respuesta": opcion, "cantidad": cantidad}
-                for opcion, cantidad in sorted(
-                    opciones_dict.items(), key=lambda kv: -kv[1]
-                )
-            ],
-        }
-        for pregunta, opciones_dict in conteo.items()
-    ]
+    reporte = []
+    for pregunta, opciones_dict in conteo.items():
+        total_pregunta = sum(opciones_dict.values())
+        reporte.append(
+            {
+                "pregunta": pregunta,
+                "opciones": [
+                    {
+                        "respuesta": opcion,
+                        "cantidad": cantidad,
+                        "porcentaje": round(cantidad * 100 / total_pregunta, 1)
+                        if total_pregunta
+                        else 0,
+                    }
+                    for opcion, cantidad in sorted(
+                        opciones_dict.items(), key=lambda kv: -kv[1]
+                    )
+                ],
+            }
+        )
 
     return _response(
         200,

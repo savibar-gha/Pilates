@@ -3,7 +3,7 @@ resource "aws_apigatewayv2_api" "http_api" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins = [var.allowed_origin]
+    allow_origins = [var.allowed_origin, regex("^https://[^/]+", var.report_callback_url)]
     allow_methods = ["POST", "GET", "OPTIONS"]
     allow_headers = ["content-type", "authorization"]
   }
