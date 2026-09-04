@@ -15,3 +15,10 @@ variable "allowed_origin" {
   type        = string
   default     = "https://savibar-gha.github.io"
 }
+
+variable "report_secret" {
+  description = "Clave que debe ingresar el staff para ver el reporte (back office). Definila con TF_VAR_report_secret o en un terraform.tfvars que NO se sube al repo."
+  type        = string
+  sensitive   = true
+}
+
