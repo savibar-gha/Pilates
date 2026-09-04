@@ -53,6 +53,12 @@ cd Pilates/backend/terraform
 
 ## 5. Desplegar con Terraform
 
+Antes de aplicar, definí la clave de acceso al back office (no la subas al repo):
+
+```bash
+export TF_VAR_report_secret="elegí-una-clave-larga-y-random"
+```
+
 ```bash
 terraform init
 terraform plan     # revisá qué se va a crear antes de aplicar
@@ -93,7 +99,23 @@ fetch('https://TU_API_URL/respuestas', {
 terraform destroy
 ```
 
-## Notas
+## 9. Back office de reportes
+
+`backend/report.html` es la página que muestra los resultados agregados
+(gráficos de barras por pregunta). Pedí publicarla en algún lado accesible
+— podés subirla al mismo GitHub Pages, en una ruta no enlazada desde la
+encuesta (ej. `/report.html`), porque **los datos están protegidos a nivel
+del backend**, no por la URL:
+
+1. Antes de subirla, editá la constante `API_BASE` dentro de `report.html`
+   con la URL real del output `api_base_url` de Terraform.
+2. La primera vez que alguien del staff entra, le pide la clave
+   (`TF_VAR_report_secret` que definiste al desplegar). El navegador la
+   guarda en `localStorage` para no pedirla cada vez.
+3. Si alguien pone la clave incorrecta, el backend devuelve 401/403 y la
+   página no muestra nada.
+
+## Notas de seguridad
 
 - El estado de Terraform queda en `terraform.tfstate` **local** por defecto. Para
   trabajar en equipo o desde más de una máquina, conviene mover el backend a S3
