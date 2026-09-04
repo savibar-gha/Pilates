@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>+Pilates — Encuesta</title>
+
+<!-- Open Graph / WhatsApp / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="+Pilates — Queremos conocerte un poco más">
+<meta property="og:description" content="Completá esta breve encuesta y ayudanos a seguir mejorando.">
+<meta property="og:image" content="https://raw.githubusercontent.com/savibar-gha/Pilates/main/preview.png">
+<meta property="og:url" content="https://savibar-gha.github.io/Pilates/">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="+Pilates — Queremos conocerte un poco más">
+<meta name="twitter:description" content="Completá esta breve encuesta y ayudanos a seguir mejorando.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/savibar-gha/Pilates/main/preview.png">
 <style>
   :root{
     --brown:#3a2318;
@@ -32,31 +45,19 @@
     overflow:hidden;
     box-shadow:0 10px 40px rgba(58,35,24,0.06);
   }
-  .card::before{
-    content:"";
-    position:absolute;
-    top:-60px; left:-60px;
-    width:200px; height:200px;
-    border-radius:50%;
-    border:14px solid var(--peach);
-    opacity:0.7;
-  }
   .header{
     display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
+    justify-content:center;
+    align-items:center;
     position:relative;
     z-index:1;
     margin-bottom:8px;
   }
-  .logo{
-    font-family:Georgia, serif;
-    font-size:28px;
-    color:var(--brown);
-    font-weight:600;
-    letter-spacing:1px;
+  .logo-img{
+    height:44px;
+    width:auto;
+    display:block;
   }
-  .logo span{color:var(--orange); font-weight:400;}
   h1{
     font-size:clamp(28px,5vw,40px);
     line-height:1.1;
@@ -208,8 +209,7 @@
 
   <form id="surveyForm">
     <div class="header">
-      <div></div>
-      <div class="logo">+<span>P</span>ilates</div>
+      <img src="logo.png" alt="+Pilates" class="logo-img">
     </div>
 
     <h1>Queremos<span class="sub">conocerte un poco más</span></h1>
